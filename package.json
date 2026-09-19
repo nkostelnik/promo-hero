@@ -1,0 +1,10 @@
+{
+  "name": "promo-hero",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Questionnaire-driven drafting and issue-spotting for sweepstakes, contests, and giveaways. Not legal advice.",
+  "scripts": {
+    "test": "node test/engine.test.js"
+  }
+}

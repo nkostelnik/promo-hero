@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Bungee&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}html,body{margin:0}
+body{width:1280px;height:640px;overflow:hidden;font-family:system-ui,"Segoe UI",sans-serif;color:#2b1d16;
+ background:radial-gradient(circle at 12% 18%,rgba(255,255,255,.5) 0 1.5px,transparent 2.5px) 0 0/110px 110px,radial-gradient(circle at 68% 62%,rgba(255,255,255,.35) 0 1.5px,transparent 2.5px) 0 0/170px 170px,linear-gradient(180deg,#1c2456,#3a2166)}
+.awning{height:96px;background:repeating-linear-gradient(90deg,#c8372d 0 64px,#fff7e2 64px 128px);box-shadow:0 8px 0 rgba(0,0,0,.2);
+ -webkit-mask:linear-gradient(#000,#000) top/100% 60px no-repeat,radial-gradient(circle at 32px 0,#000 31px,transparent 32px) 0 60px/64px 36px repeat-x}
+.sign{position:absolute;left:80px;top:150px;font-family:Bungee,Impact,sans-serif;font-size:80px;letter-spacing:.04em;color:#e8b93c;
+ background:linear-gradient(180deg,#4a1717,#2b0c0c);border:6px solid #e8b93c;border-radius:20px;padding:14px 40px 6px;box-shadow:0 0 0 6px #c8372d,0 12px 26px rgba(0,0,0,.5);text-shadow:0 4px 0 #8f231c}
+.tag{position:absolute;left:80px;top:330px;width:740px;font-family:"Alfa Slab One",Georgia,serif;font-size:38px;line-height:1.2;color:#fff7e2}
+.tag em{font-style:normal;color:#e8b93c}
+.ticket{position:absolute;right:70px;top:170px;width:330px;background:#fff7e2;border:6px solid #e8b93c;border-radius:20px;box-shadow:0 0 0 6px #c8372d,0 14px 30px rgba(0,0,0,.5);padding:20px 20px 14px}
+.ticket h4{margin:0 0 12px;font-family:Bungee,Impact,sans-serif;font-size:18px;color:#c8372d;letter-spacing:.05em}
+.opt{position:relative;margin:0 0 10px;padding:10px 12px 10px 58px;background:#fff;border:3px solid #e3cf9c;border-radius:12px;font-size:20px}
+.opt:before{content:"";position:absolute;left:0;top:0;bottom:0;width:42px;background:#f6e2a8;border-radius:9px 0 0 9px}
+.opt:after{content:"";position:absolute;left:42px;top:6px;bottom:6px;border-left:3px dashed #d3a53a}
+.opt i{position:absolute;left:11px;top:50%;margin-top:-10px;width:20px;height:20px;border-radius:50%;border:3px solid #6d5646;background:#fff}
+.opt.on{border-color:#c8372d;background:#fff1c9;box-shadow:4px 4px 0 #c8372d}.opt.on:before{background:#e8b93c}.opt.on i{border-color:#c8372d;background:radial-gradient(#c8372d 0 5px,#fff 6px)}
+.btn{display:inline-block;margin-top:6px;font-family:"Alfa Slab One",serif;font-size:22px;color:#fff;padding:8px 30px;border:4px solid #e8b93c;border-radius:999px;background:linear-gradient(180deg,#f08a24,#c8372d);box-shadow:0 6px 0 #8f231c}
+.foot{position:absolute;left:80px;bottom:36px;display:flex;gap:14px;font-size:22px;font-weight:700}
+.chip{background:#fff7e2;color:#7a4d00;border:3px dashed #c8372d;border-radius:10px;padding:6px 16px}
+</style></head><body>
+<div class="awning"></div>
+<div class="sign">PROMO HERO</div>
+<div class="tag">Answer a few questions. Get <em>sweepstakes and contest rules</em>, with legal red flags called out.</div>
+<div class="ticket"><h4>HOW ARE WINNERS CHOSEN?</h4>
+<div class="opt on"><i></i>Random drawing</div><div class="opt"><i></i>Judged on merit</div><div class="opt"><i></i>Most votes wins</div>
+<div style="text-align:right"><span class="btn">Next</span></div></div>
+<div class="foot"><span class="chip">Decision tree</span><span class="chip">US, state-aware</span><span class="chip">Not legal advice</span></div>
+</body></html>

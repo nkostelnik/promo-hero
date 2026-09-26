@@ -1,0 +1,8 @@
+# Promo Hero
+
+> A decision-tree tool that drafts sweepstakes, contest, and giveaway rules and flags legal red flags as you answer questions. Not legal advice.
+
+Currently a private repository; this file is prepared for whenever it's made public.
+
+## Primary page
+- [Promo Hero](https://nkostelnik.github.io/promo-hero/): the rules drafter tool.

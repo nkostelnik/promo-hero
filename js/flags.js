@@ -36,7 +36,8 @@
     const out = [];
     if (chance && total > REG_THRESHOLD && !excluded.includes('NY')) out.push('NY');
     if (chance && total > REG_THRESHOLD && !excluded.includes('FL')) out.push('FL');
-    if (a.determination === 'random' && a.consideration === 'purchase' && total > RI_THRESHOLD && !excluded.includes('RI')) out.push('RI');
+    // RI 11-50-1 is worded for retail establishments, but the RI Department of State's filing instructions say all games offering over $500 in prizes to RI residents must file.
+    if (chance && total > RI_THRESHOLD && !excluded.includes('RI')) out.push('RI');
     return out;
   }
 
@@ -83,7 +84,7 @@
   function evaluate(a, opts) {
     const today = (opts && opts.today) || new Date();
     const flags = [];
-    const add = (id, level, title, detail) => flags.push({ id, level, title, detail, note: FLAG_NOTE });
+    const add = (id, level, title, detail) => flags.push({ id, level, title, detail, note: FLAG_NOTE, review: NS.reviewFor ? NS.reviewFor(id, a) : null });
 
     const total = totalARV(a.prizes);
     const chance = a.determination === 'random' || a.determination === 'votes';
@@ -97,7 +98,7 @@
     const structure = classify(a);
     if (a.determination === 'random' && structure.lottery) {
       add('LOTTERY', 'stop', 'Prize + chance + payment: an illegal lottery',
-        'A random drawing where entrants must pay, buy, or make a significant effort is treated as an illegal lottery in most states. Fix it by adding a free alternate method of entry with equal odds and equal prominence, by removing the purchase or fee, or by switching to a judged skill contest.');
+        'A random drawing where entrants must pay or buy is an illegal lottery under the state lottery statutes reviewed for this tool, and this tool also treats significant effort as payment as a conservative default. Fix it by adding a free alternate method of entry with equal odds and equal prominence, by removing the purchase or fee, or by switching to a judged skill contest.');
     }
     if (a.determination === 'votes' && (hasConsideration(a) || a.consideration === 'effort') && a.hasAmoe !== 'yes') {
       add('VOTE_PAY', 'stop', 'Paid or effort-based entry in a popularity vote',
@@ -109,11 +110,11 @@
     }
     if (a.winnerPays === 'yes') {
       add('WINNER_PAYS', 'stop', 'Winners must pay to claim the prize',
-        'Requiring winners to pay a fee, deposit, or purchase to receive a prize is deceptive under FTC and state law and can turn a lawful promotion into a lottery. Sponsors may pass on taxes and incidental costs only, and must say so up front.');
+        'Requiring winners to pay a fee, deposit, or purchase to receive a prize is restricted by many state prize statutes (Nevada treats requiring a purchase to claim a prize as a deceptive practice, and Iowa and North Dakota bar payment without a prior written prize notice) and can turn a lawful promotion into a lottery. Sponsors may pass on taxes and incidental costs only, and must say so up front.');
     }
     if (has(restricted, 'cannabis')) {
       add('CANNABIS', 'stop', 'Cannabis or CBD promotion',
-        'Cannabis remains illegal under federal law, state rules vary widely and often ban giveaways, and every major social platform prohibits these promotions. Do not proceed without counsel who handles cannabis marketing.');
+        'Marijuana remains a Schedule I controlled substance under federal law, state rules vary widely, and platform policies such as Meta\'s require compliance with laws on age-restricted products and may prohibit these promotions outright. Hemp-derived CBD (0.3 percent delta-9 THC or less) is defined separately under federal law but is still tightly regulated, so treat it the same way until counsel says otherwise. Do not proceed without counsel who handles cannabis marketing.');
     }
     if (has(restricted, 'alcohol') && a.minAge !== '21') {
       add('ALCOHOL_AGE', 'stop', 'Alcohol promotion open to people under 21',
@@ -144,12 +145,54 @@
         'Game promotions with total prizes above $5,000 generally require registration with the Florida Department of Agriculture and Consumer Services and a bond or trust account for the prize value. Some exemptions exist. Excluding Florida residents avoids this.');
     }
     if (regs.includes('RI')) {
-      add('REG_RI', 'action', 'Rhode Island retail promotion registration',
-        'Retail-linked games of chance in Rhode Island with total prizes above $500 may require registration with the Secretary of State. Excluding Rhode Island residents avoids this.');
+      add('REG_RI', 'action', 'Rhode Island games of chance filing',
+        'Rhode Island requires a filing with the Secretary of State (a $150 fee applies, and failure to file is a misdemeanor) for chance-based promotions with total announced prizes above $500. The statute is worded for a retail establishment promoting its retail business, but the Department of State\'s filing instructions say all games offering over $500 in prizes must file, including games offered to Rhode Island residents from other states, and that a winners list must be kept for at least one year. No filing deadline appears in the statute. Total prize value here is $' + total.toLocaleString('en-US') + '. Excluding Rhode Island residents avoids this.');
+    }
+    if (a.determination === 'judged' && a.consideration === 'purchase' && !(a.excludedStates || []).includes('AZ')) {
+      add('AZ_CONTEST', 'action', 'Arizona contest registration',
+        'Arizona requires registration with the Attorney General before running an "amusement gambling intellectual contest" tied to a product sale, plus a sworn statement that the product price was not increased for the contest and a winner list filed within 10 days after prizes are awarded. Whether your contest qualifies depends on a definition that has not been confirmed. Excluding Arizona residents avoids this.');
+    }
+    if (has(a.prizeTypes, 'realproperty') && !(a.excludedStates || []).includes('HI')) {
+      add('HI_REALTY', 'action', 'Hawaii bond for real property prizes',
+        'Hawaii requires a bond of at least $10,000, naming the director of commerce and consumer affairs as obligee, to offer a real property prize. Excluding Hawaii residents avoids this.');
+    }
+    if (chance && hasConsideration(a) && a.hasAmoe === 'yes' && !(a.excludedStates || []).includes('NJ')) {
+      add('NJ_PAID', 'action', 'New Jersey paid-entry sweepstakes limits',
+        'A 2025 New Jersey law treats a sweepstakes that a person in New Jersey can enter by paying or proffering something of value as unlawful gambling unless conditions are met: a free method of entry exists; any non-free entry is ancillary to buying food, non-alcoholic beverages or merchandise worth no more than $20 (or another amount set by the Director); odds are identical for free and paid entries; rules and odds are disclosed; winners are not picked by sports results unless all entry is free; and minors need parent consent to claim prizes over $1,000.' +
+        (a.consideration === 'fee' ? ' An entry fee is not a purchase of merchandise, so a fee-based entry is unlikely to fit.' : '') +
+        ' The law defines a sweepstakes as an event, contest or game "whether played online or in person", took effect immediately in August 2025, and carries civil penalties up to $100,000 for a first violation and $250,000 for later ones, each day a separate violation. How the $20 limit applies to purchase-linked promotions is a question for counsel, so confirm it or exclude New Jersey residents.');
+    }
+
+    // ---- open questions: raised when they apply, marked for attorney review in js/review.js. None of these takes a side.
+    const notExcluded = (code) => !(a.excludedStates || []).includes(code);
+    if (chance && a.consideration !== 'purchase' && notExcluded('CT')) {
+      add('CT_REVIEW', 'note', 'Connecticut: standalone sweepstakes',
+        'Connecticut General Statutes 42-301 restricts sweepstakes and promotional drawings. The text read bars one that is "not related to the bona fide sale of goods, services or property", or one that uses a simulated gambling device, with an exception for grocery chains. Whether those two conditions are alternatives or must both be met is unresolved, so a giveaway by a business that is not selling to entrants may or may not be covered. Have an attorney review this, or exclude Connecticut residents.');
+    }
+    if (chance && hasConsideration(a) && notExcluded('MA')) {
+      add('MA_REVIEW', 'note', 'Massachusetts: payment for a chance and prize advertising',
+        'Massachusetts regulation 940 CMR 30.04 makes it an unfair and deceptive practice to solicit or accept payment for a chance to win a prize, and to run a transaction where a gambling purpose predominates over the bona fide sale of goods or services. 940 CMR 6.08 requires prize advertising to identify the prize and its value and material conditions, to make official rules available at entry, and to deliver prizes when conditions are met. How the predominance test applies to a purchase-linked promotion is unresolved. Have an attorney review this, or exclude Massachusetts residents.');
+    }
+    if (chance && (hasConsideration(a) || a.consideration === 'effort') && notExcluded('GA')) {
+      add('GA_REVIEW', 'note', 'Georgia: exclusions from the lottery definition',
+        'Georgia defines a lottery as a scheme distributing prizes by chance among persons who have paid or promised consideration (O.C.G.A. 16-12-20) and lists exclusions, including lawful promotional giveaways and no-purchase giveaways. The exact conditions of those exclusions were not confirmed, so whether a paid or effort-based entry with a free route fits one is unresolved. Have an attorney review this, or exclude Georgia residents.');
+    }
+    if (hasConsideration(a) && (a.determination === 'judged' || a.hasAmoe !== 'yes') && (notExcluded('ID') || notExcluded('VT'))) {
+      const which = [notExcluded('ID') ? 'Idaho' : null, notExcluded('VT') ? 'Vermont' : null].filter(Boolean).join(' and ');
+      add('ID_VT_FEES', 'note', 'Idaho and Vermont: entry fees and required purchases',
+        'Idaho (IDAPA 04.02.01.080) makes it unlawful for sellers to run any game of chance, contest, sweepstakes or promotion that requires an entry fee, purchase or other obligation to enter, and Vermont Consumer Protection Rule CF 109 bars soliciting participation in contests, sweepstakes or promotions that require an entry fee, purchase or similar consideration. A required payment therefore matters in these states even for a skill contest. Your promotion can reach ' + which + '. Have an attorney review this, or exclude ' + which + ' residents.');
+    }
+    if (a.smsUsed === 'yes' && (notExcluded('LA') || notExcluded('KY'))) {
+      add('LA_KY_REVIEW', 'note', 'Louisiana and Kentucky: promotions by phone or text',
+        'Louisiana R.S. 51:1732 is described as requiring sponsors that solicit calls for a prize, contest or sweepstakes to give the Attorney General ad scripts and recordings (the statute text was not read), and Kentucky regulates prize offers made by telephone (KRS 367.46951 to 367.46999). Whether a text-message promotion is covered is unresolved. Have an attorney review this, or exclude Louisiana and Kentucky residents.');
+    }
+    if (hasConsideration(a)) {
+      add('PRIZE_NOTICE', 'note', 'Prize-notice rules where payment is required',
+        'Many states (for example Iowa, North Dakota, Minnesota, Tennessee, Wisconsin, Kansas, South Dakota, Utah, Wyoming, Illinois and Virginia) regulate prize notices where payment or a sales presentation is involved. They generally bar requesting payment before a written prize notice with the sponsor\'s identity, the retail value of each prize, the odds and any fees, and they set prize delivery times. These rules are aimed at solicitations that invite payment or a sales presentation, and whether they reach an online promotion with a required purchase is unresolved. Have an attorney review this.');
     }
     if (a.determination === 'random' && a.consideration === 'effort' && a.hasAmoe !== 'yes') {
-      add('EFFORT', 'action', 'Substantial effort can count as payment',
-        'In some states, requiring significant time, effort, or personal data (long surveys, store visits, video creation) is treated as consideration. Offer a free, simple alternate route or reduce the effort.');
+      add('EFFORT', 'note', 'Substantial effort may be treated as payment',
+        'Some states say ordinary steps such as visiting a store, making a call or filling out an entry form are not consideration (Washington, for example), and several define "something of value" as money or property. No statute reviewed says substantial effort is payment, but this tool treats it that way as a conservative default, and children\'s advertising guidance warns against requiring excessive time, content creation or in-game tasks. Offer a free, simple alternate route or reduce the effort.');
     }
     if (a.hasAmoe === 'yes' && a.consideration !== 'none') {
       add('AMOE_QUALITY', 'note', 'Keep the free entry route truly equal',
@@ -169,23 +212,27 @@
     }
     if (a.determination === 'firstcome' && (hasConsideration(a) || a.consideration === 'effort')) {
       add('FIRSTCOME_PAY', 'action', 'First-come promotion tied to a purchase',
-        'Speed-based winners can be treated as chance when latency or ties decide the outcome, which becomes a lottery once payment is involved. Consider a free route or a different mechanism.');
+        'New Mexico excepts bona fide contests of speed from its definition of a bet, but Alaska and Alabama treat a contest as one of chance when chance materially affects the outcome even if skill or speed also matters. Network lag or ties broken at random can bring chance in, and chance plus payment is a lottery. Consider a free route or a different mechanism.');
     }
     if (a.minAge === '13') {
       add('MINORS', 'action', 'Minors can enter',
         'People under the age of majority need parent or guardian permission, prizes must go to the parent or guardian, and state privacy laws add duties for teen data. The draft includes minor-entry terms.');
     }
+    if (a.minAge === '18' && !(['AL', 'NE'].every((c) => (a.excludedStates || []).includes(c)))) {
+      add('AGE_MAJORITY', 'note', 'Age of majority is 19 in some states',
+        'Alabama and Nebraska set the age of majority at 19. The draft rules say 18 or the age of majority in the entrant\'s state, whichever is older, which covers this. If you need a flat 18 minimum, exclude those states.');
+    }
     if (has(restricted, 'alcohol') && a.minAge === '21') {
       add('ALCOHOL', 'action', 'Alcohol rules apply',
-        'Federal (TTB) and state alcohol laws limit inducements, purchase-linked promotions, and shipping. Verify with alcohol regulatory counsel, especially if entry involves buying.');
+        'Alcohol promotions are regulated mainly by state law, and some states require advance approval (Maryland requires 14 days for sweepstakes and contests and an alternative entry that needs no alcohol purchase). Federal law bars industry inducements to retailers (27 CFR 6.21) and shipping liquor into a state where it violates that state\'s law (27 U.S.C. 122). Verify with alcohol regulatory counsel, especially if entry involves buying.');
     }
     if (has(restricted, 'tobacco')) {
       add('TOBACCO', 'action', 'Tobacco and vape promotions are heavily restricted',
-        'FDA and state rules restrict giveaways and promotions for tobacco and vapes, and platforms ban most of them. Get specialist review.');
+        'FDA rules bar gifts given in consideration of buying cigarettes or smokeless tobacco (21 CFR 1140.34), state rules add more, and platform policies require compliance with laws on age-restricted products. Vapes and other tobacco products need specialist review to confirm which rules apply.');
     }
     if (has(restricted, 'firearms')) {
       add('FIREARMS', 'action', 'Firearm prizes',
-        'Awarding a firearm requires a licensed dealer transfer and background check, and social platforms prohibit these promotions.');
+        'Federal law bars unlicensed transfers of firearms to residents of other states and requires a licensed dealer to run a background check before transferring a firearm, so a firearm prize is normally transferred through a licensed dealer. Platform policies require compliance with applicable laws and may prohibit these promotions outright.');
     }
     if (has(restricted, 'financial')) {
       add('FINANCIAL', 'action', 'Financial products',
@@ -221,15 +268,15 @@
     }
     if (a.marketing === 'required') {
       add('MARKETING_REQUIRED', 'action', 'Marketing consent as a condition of entry',
-        'Making marketing consent mandatory to enter raises consent-validity risk under state privacy laws and CAN-SPAM practice, and is unwise if a purchase is involved. Prefer an optional, unchecked opt-in.');
+        'Making marketing consent mandatory to enter raises consent-validity risk: under the California privacy law, consent bundled into general terms is not valid consent, and consent to marketing texts cannot be a condition of purchase under the TCPA rules. It is unwise if a purchase is involved. Prefer an optional, unchecked opt-in.');
     }
     if (!(a.privacyUrl || '').trim()) {
       add('PRIVACY', 'action', 'No privacy policy linked',
-        'Collecting names and contact details generally requires a notice at collection (for example under California law). Link your privacy policy in the rules and on the entry form.');
+        'Collecting names and contact details generally requires a posted privacy policy (California requires one from any online operator that collects personal information from California residents) and, for businesses over the CCPA thresholds, a notice at collection. Link your privacy policy in the rules and on the entry form.');
     }
     if (a.charity === 'yes') {
       add('CHARITY', 'action', 'Charity tie-in',
-        'Tying a purchase or donation to a charity can trigger commercial co-venturer and charitable solicitation registration and disclosure rules in many states. This tool does not draft those terms.');
+        'Tying a purchase or donation to a charity can trigger commercial co-venturer and charitable solicitation registration and disclosure rules in states such as California. This tool does not draft those terms.');
     }
 
     // ---- notes

@@ -53,6 +53,14 @@ body {
 .brand span { font-family: system-ui, sans-serif; font-size: 13px; color: var(--cream); margin-left: 10px; letter-spacing: 0; text-shadow: none; }
 
 /* ---------- layout */
+.intro { max-width: 1400px; margin: 0 auto; padding: 2px 16px 4px; color: var(--cream); }
+.intro p { margin: 0 0 8px; max-width: 920px; font-size: 16px; line-height: 1.5; }
+.intro .tagline { margin: 4px 0 8px; font-family: var(--marquee); font-size: 26px; line-height: 1.2; letter-spacing: .02em; }
+.intro .tagline em { font-style: normal; color: var(--gold); }
+.intro .intro-small { font-size: 14px; opacity: .92; }
+html[data-theme=plain] .intro { color: var(--ink); }
+html[data-theme=plain] .intro .tagline { font-family: inherit; font-weight: 800; }
+html[data-theme=plain] .intro .tagline em { color: var(--red); }
 .layout { display: grid; grid-template-columns: 210px minmax(0, 1fr) 360px; gap: 22px; max-width: 1400px; margin: 0 auto; padding: 14px 16px 56px; align-items: start; }
 .steps { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 4px; color: var(--cream); scrollbar-color: var(--gold) transparent; }
 .path-title { font-family: var(--marquee); font-size: 13px; letter-spacing: .08em; color: var(--gold); padding: 0 10px 6px; }
@@ -151,10 +159,42 @@ details.states summary { cursor: pointer; color: var(--red-dark); font-weight: 6
 .flag.stop { border-color: var(--stop); background: var(--stop-bg); }
 .flag.action { border-color: #c98a00; background: var(--action-bg); }
 .flag.note { border-color: var(--note); background: var(--note-bg); }
+.flag.review { box-shadow: inset 0 0 0 2px #6b3fa0; }
+.flag .rev { display: block; margin-top: 6px; padding: 5px 8px; border-radius: 6px; background: #efe6fa; color: #3d1f66; font-size: 13px; }
+.flag .rev b { display: inline; }
+.pill.review { background: #efe6fa; color: #3d1f66; }
+.badge.review { background: #efe6fa; color: #3d1f66; }
+.revnote { margin: 6px 0 0; padding: 5px 8px; border-radius: 6px; background: #efe6fa; color: #3d1f66; font-size: 13px; }
+.warnbox.revbox { border-color: #6b3fa0; background: #efe6fa; color: #3d1f66; }
 .flag b { display: block; }
 .flag .lvl { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; opacity: .85; }
 .flag .lawyer { display: block; margin-top: 4px; font-style: italic; opacity: .9; }
 .empty { padding: 8px 10px; border-radius: 8px; font-size: 14px; background: var(--ok-bg); color: var(--ok); }
+.coverage { margin-top: 16px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
+.coverage h3 { margin: 0 0 6px; font-size: 14px; }
+.coverage p { margin: 0 0 6px; }
+.coverage ul { margin: 6px 0 0; padding-left: 18px; }
+.coverage summary { cursor: pointer; font-weight: 700; }
+.coverage .cov-foot { margin: 8px 0 0; font-style: italic; opacity: .9; }
+
+/* ---------- state notes */
+.statenotes { margin: 0 0 16px; padding: 10px 14px; border: 2px solid var(--line); border-radius: 10px; background: var(--paper); }
+.statenotes > summary { cursor: pointer; font-weight: 700; }
+.statenotes .help { margin: 8px 0; }
+.state { margin: 6px 0; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; }
+.state > summary { cursor: pointer; }
+.state ul { margin: 6px 0 4px; padding-left: 0; list-style: none; }
+.state .regnote { margin: 6px 0 0; font-weight: 700; }
+.state .asof { margin: 4px 0 0; font-size: 12px; opacity: .8; }
+.badge { margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--note-bg); color: var(--note); }
+.badge.required { background: var(--action-bg); color: var(--action); }
+.fnd { margin: 6px 0; padding: 4px 8px; border-left: 4px solid var(--line); font-size: 14px; }
+.fnd.verified { border-color: var(--note); }
+.fnd.secondary { border-color: #c98a00; opacity: .85; }
+.fnd .st { display: inline-block; margin-right: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; opacity: .85; }
+.fnd .cite { display: inline-block; margin-left: 4px; font-size: 12px; }
+.fnd q { display: block; margin-top: 3px; font-size: 12px; font-style: italic; opacity: .85; }
+.fnd q::before, .fnd q::after { content: ''; }
 
 /* ---------- review */
 .structure { margin-bottom: 16px; padding: 14px 16px; background: var(--paper); border: 3px solid var(--red); border-radius: 14px; }
@@ -177,8 +217,11 @@ details.states summary { cursor: pointer; color: var(--red-dark); font-weight: 6
 .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); padding: 8px 16px; background: #2b0c0c; color: var(--gold); border: 2px solid var(--gold); border-radius: 10px; font-size: 14px; }
 
 /* ---------- responsive and print */
+/* Long URLs, citations and quotes must wrap instead of widening the page. */
+.main, .flags, .terms, .statenotes { overflow-wrap: anywhere; }
+.terms table { display: block; max-width: 100%; overflow-x: auto; }
 @media (max-width: 1100px) {
-  .layout { grid-template-columns: 1fr; gap: 26px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 26px; }
   .steps { position: static; flex-direction: row; overflow-x: auto; padding-bottom: 6px; }
   .step { white-space: nowrap; }
   .step .pq small, .path-title { display: none; }
@@ -190,9 +233,22 @@ details.states summary { cursor: pointer; color: var(--red-dark); font-weight: 6
   .brand span { display: none; }
   .brand { font-size: 20px; }
   .q > label, .q > legend { font-size: 21px; }
+  /* Phones: 16px form text stops iOS zooming on focus, and controls are at least 44px tall. */
+  input, select, textarea { font-size: 16px; }
+  .btn, .step { min-height: 44px; }
+  .statenotes > summary, .state > summary, .coverage summary { min-height: 44px; display: flex; align-items: center; flex-wrap: wrap; }
+  .top { flex-wrap: wrap; }
+  .main { padding: 20px 14px 18px; }
+  .terms { padding: 16px; }
+  .banner { font-size: 13px; padding: 6px 12px; }
+  .intro { padding: 0 12px 2px; }
+  .intro .tagline { font-size: 20px; }
+  .intro p { font-size: 15px; }
+  .intro .intro-small { font-size: 13px; }
+  .layout { padding-left: 10px; padding-right: 10px; }
 }
 @media print {
-  .awning, .banner, .top, .steps, .flags, .export, .nav-row, .structure, .warnbox, .review-extra { display: none !important; }
+  .awning, .banner, .top, .intro, .steps, .flags, .export, .nav-row, .structure, .warnbox, .review-extra, .statenotes { display: none !important; }
   body { background: #fff; }
   .layout { display: block; padding: 0; }
   .main { border: 0; box-shadow: none; padding: 0; }

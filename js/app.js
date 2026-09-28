@@ -77,13 +77,54 @@
   // ---------- flags panel
   function flagHTML(f) {
     const lvl = { stop: 'Likely illegal as designed', action: 'Legal requirement', note: 'Good practice' }[f.level];
-    return '<div class="flag ' + f.level + '"><span class="lvl">' + lvl + '</span><b>' + esc(f.title) + '</b>' + esc(f.detail) + '<span class="lawyer">' + esc(f.note) + '</span></div>';
+    const rev = f.review ? '<span class="rev"><b>' + esc(NS.REVIEW_LABEL) + '.</b> ' + esc(f.review.reason) + '</span>' : '';
+    return '<div class="flag ' + f.level + (f.review ? ' review' : '') + '"><span class="lvl">' + lvl + '</span><b>' + esc(f.title) + '</b>' + esc(f.detail) + rev + '<span class="lawyer">' + esc(f.note) + '</span></div>';
+  }
+  function coverageHTML() {
+    if (!NS.coverage) return '';
+    const c = NS.coverage(answers.excludedStates);
+    const list = (codes) => codes.join(', ');
+    const scope = (answers.excludedStates || []).length
+      ? '<p>Your eligible states: ' + c.eligibleCount + '. Registration states still in scope: ' + (c.eligibleRequired.length ? list(c.eligibleRequired) : 'none') + '. Narrower filing rules still in scope: ' + (c.eligibleNarrow.length ? list(c.eligibleNarrow) : 'none') + '.</p>'
+      : '';
+    return '<section class="coverage"><h3>State rules reviewed</h3>' +
+      '<p>' + c.total + ' jurisdictions reviewed as of ' + esc(c.asOf) + '. Registration and bonding for a general sweepstakes: ' + list(c.required) + '. Narrower filing rules: ' + list(c.narrow) + '.</p>' +
+      '<p>Nothing was found for the other ' + c.noneFound.length + '. That means none found in the text read, not that none exist.</p>' +
+      (function () { const k = NS.evaluate(answers).filter((f) => f.review).length; return k ? '<p><b>' + k + ' flag' + (k === 1 ? '' : 's') + ' on this promotion ' + (k === 1 ? 'is' : 'are') + ' recommended for attorney review</b> because ' + (k === 1 ? 'it rests' : 'they rest') + ' on a question that has not been resolved.</p>' : ''; })() +
+      scope +
+      '<details><summary>Narrower filing rules</summary><ul>' + c.narrowNotes.map((x) => '<li><b>' + esc(x.code) + '</b> ' + esc(x.note) + '</li>').join('') + '</ul></details>' +
+      '<p class="cov-foot">Attorney review of these findings: ' + c.attorneyReviewed + ' of ' + c.total + '. U.S. territories and Canada are not covered. This is not legal advice.</p></section>';
+  }
+  const STATUS_LABEL = { verified: 'Read from source', secondary: 'Unconfirmed (secondary source)', notfound: 'Searched, none found' };
+  const REG_LABEL = { required: 'Registration and bond', partial: 'Narrower filing rule' };
+  const safeUrl = (u) => (/^https?:\/\//i.test(u || '') ? u : '');
+  function stateNotesHTML() {
+    if (!NS.stateNotes) return '';
+    const notes = NS.stateNotes(answers.excludedStates);
+    const one = (s) => {
+      const rows = s.findings.map((f) => {
+        const url = safeUrl(f.url);
+        return '<li class="fnd ' + esc(f.status) + '"><span class="st">' + esc(STATUS_LABEL[f.status] || f.status) + '</span> <b>' + esc(f.topic) + '.</b> ' + esc(f.summary) +
+          (f.cite ? ' <span class="cite">' + (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(f.cite) + '</a>' : esc(f.cite)) + '</span>' : '') +
+          (f.excerpt ? '<q>' + esc(f.excerpt) + '</q>' : '') + '</li>';
+      }).join('');
+      const rv = NS.reviewStateFor ? NS.reviewStateFor(s.code) : null;
+      const badge = (REG_LABEL[s.registration] ? '<span class="badge ' + esc(s.registration) + '">' + REG_LABEL[s.registration] + '</span>' : '') + (rv ? '<span class="badge review">For attorney review</span>' : '');
+      return '<details class="state"><summary><b>' + esc(s.code) + '</b> ' + esc(s.name) + ' ' + badge + '</summary>' +
+        (rv ? '<p class="revnote"><b>' + esc(NS.REVIEW_LABEL) + '.</b> ' + esc(rv.reason) + '</p>' : '') +
+        (s.registrationNote ? '<p class="regnote">' + esc(s.registrationNote) + '</p>' : '') + '<ul>' + rows + '</ul><p class="asof">Surveyed ' + esc(s.surveyedOn) + '.</p></details>';
+    };
+    return '<details class="statenotes"><summary>State notes for your ' + notes.length + ' eligible states</summary>' +
+      '<p class="help">What the survey found for each state your promotion can reach. "Read from source" means the cited text was read, mostly through a summarizing tool, so re-read it before relying on it. "Searched, none found" is not proof that no rule exists. Not legal advice.</p>' +
+      notes.map(one).join('') + '</details>';
   }
   function renderFlags() {
     const flags = NS.evaluate(answers);
     const n = (l) => flags.filter((f) => f.level === l).length;
-    $('flags').innerHTML = '<h2>Legal flags</h2><div class="counts"><span class="pill stop">' + n('stop') + ' stop</span><span class="pill action">' + n('action') + ' action</span><span class="pill note">' + n('note') + ' notes</span></div>' +
-      (flags.length ? flags.map(flagHTML).join('') : '<div class="empty">No issues spotted yet. That does not mean the promotion is lawful. Consult a lawyer. This is not legal advice.</div>');
+    const nrev = flags.filter((f) => f.review).length;
+    $('flags').innerHTML = '<h2>Legal flags</h2><div class="counts"><span class="pill stop">' + n('stop') + ' stop</span><span class="pill action">' + n('action') + ' action</span><span class="pill note">' + n('note') + ' notes</span>' + (nrev ? '<span class="pill review">' + nrev + ' for attorney review</span>' : '') + '</div>' +
+      (flags.length ? flags.map(flagHTML).join('') : '<div class="empty">No issues spotted yet. That does not mean the promotion is lawful. Consult a lawyer. This is not legal advice.</div>') +
+      coverageHTML();
   }
   function updateTotal() {
     const el = $('totalARV');
@@ -166,9 +207,14 @@
     if (doc.stops.length) {
       html += '<div class="warnbox"><b>' + doc.stops.length + ' unresolved stop issue(s).</b> The draft below is not usable as is.<ul>' + doc.stops.map((f) => '<li>' + esc(f.title) + '</li>').join('') + '</ul></div>';
     }
+    const revItems = NS.evaluate(answers).filter((f) => f.review);
+    if (revItems.length) {
+      html += '<div class="warnbox revbox"><b>' + esc(NS.REVIEW_LABEL) + ' (' + revItems.length + ').</b> These flags rest on questions that have not been resolved. The reason is shown on each flag.<ul>' + revItems.map((f) => '<li>' + esc(f.title) + ': ' + esc(f.review.reason) + '</li>').join('') + '</ul></div>';
+    }
     if (missing.length) {
       html += '<div class="warnbox"><b>Missing required answers:</b> ' + missing.map((q) => esc(q.label)).join('; ') + '. They appear as highlighted placeholders.</div>';
     }
+    html += stateNotesHTML();
     html += '<div class="export"><button type="button" class="btn" data-act="doc">Download Word (.doc)</button><button type="button" class="btn ghost" data-act="copy">Copy text</button><button type="button" class="btn ghost" data-act="print">Print or save PDF</button><button type="button" class="btn ghost" data-act="back">Back to questions</button></div>';
     if (doc.placeholders.length) {
       html += '<p class="help review-extra">Fill in before publishing: ' + doc.placeholders.map((p) => '[' + esc(p) + ']').join(', ') + '</p>';
@@ -182,7 +228,7 @@
     return '<div style="border:2px solid #b3261e;padding:12px;font-family:Arial,sans-serif;font-size:11pt">' +
       '<p><b>READ FIRST AND DELETE THIS PAGE BEFORE PUBLISHING.</b></p>' +
       '<p>This draft was generated by an automated tool. It is not legal advice and is not a substitute for a licensed attorney. Promotion laws differ by state and change often. Have a lawyer review and approve these rules before you launch.</p>' +
-      '<p><b>Legal flags (' + flags.length + ')</b></p><ul>' + flags.map((f) => '<li><b>[' + f.level.toUpperCase() + '] ' + esc(f.title) + '.</b> ' + esc(f.detail) + '</li>').join('') + '</ul>' +
+      '<p><b>Legal flags (' + flags.length + ')</b></p><ul>' + flags.map((f) => '<li><b>[' + f.level.toUpperCase() + '] ' + esc(f.title) + '.</b> ' + esc(f.detail) + (f.review ? ' <b>[' + esc(NS.REVIEW_LABEL.toUpperCase()) + ': ' + esc(f.review.reason) + ']</b>' : '') + '</li>').join('') + '</ul>' +
       (doc.placeholders.length ? '<p><b>Fill in:</b> ' + doc.placeholders.map((p) => '[' + esc(p) + ']').join(', ') + '</p>' : '') + '</div><br style="page-break-before:always">';
   }
 

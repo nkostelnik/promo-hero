@@ -168,6 +168,7 @@
       options: [
         { value: 'goods', label: 'Products or goods' }, { value: 'cash', label: 'Cash' }, { value: 'giftcard', label: 'Gift cards' },
         { value: 'travel', label: 'Travel' }, { value: 'experience', label: 'Experience or event tickets' },
+        { value: 'realproperty', label: 'Real estate or other real property' },
       ],
     },
     {
@@ -221,7 +222,7 @@
     amoeMethod: 'Determines the free-entry wording that is drafted into the rules.',
     minAge: 'Under 13 triggers children\'s privacy law (COPPA). 13 to 17 adds parent and guardian terms. 21 is required for alcohol.',
     excludedStates: 'Excluding a state removes that state\'s registration and bonding requirements from your flags.',
-    prizes: 'Total prize value drives registration: over $5,000 in NY and FL for chance-based promotions, and over $500 in RI for purchase-linked drawings.',
+    prizes: 'Total prize value drives registration: over $5,000 in NY and FL for chance-based promotions, and over $500 in RI for chance-based promotions. Real property prizes add a Hawaii bond.',
     restricted: 'Regulated products bring extra rules, and some are stop items. Alcohol forces a 21+ age limit.',
     winnerPays: 'Charging winners to claim a prize is a stop item.',
     marketing: 'Forcing marketing consent as a condition of entry is flagged. An optional checkbox is safest.',

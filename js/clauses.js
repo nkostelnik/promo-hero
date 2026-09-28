@@ -266,9 +266,19 @@
       const items = [];
       if (regs.includes('NY')) items.push('New York: Registered with the New York Department of State, Registration No. ' + ph('NEW YORK REGISTRATION NUMBER') + '.');
       if (regs.includes('FL')) items.push('Florida: Registered with the Florida Department of Agriculture and Consumer Services, Registration No. ' + ph('FLORIDA REGISTRATION NUMBER') + '.');
-      if (regs.includes('RI')) items.push('Rhode Island: Registered with the Rhode Island Secretary of State, Registration No. ' + ph('RHODE ISLAND REGISTRATION NUMBER') + '.');
+      if (regs.includes('RI')) items.push('Rhode Island: A statement for this game of chance has been filed with the Rhode Island Secretary of State under R.I. Gen. Laws 11-50-1.');
       sec('State Registrations', [{ ul: items }]);
     }
+
+    // ---- state-specific notices, driven by the same flags the user sees so the two cannot disagree
+    const fired = new Set((NS.evaluate ? NS.evaluate(a) : []).map((f) => f.id));
+    const outStates = a.excludedStates || [];
+    const notices = [];
+    if (fired.has('NJ_PAID')) notices.push('New Jersey: The odds of winning any prize are identical whether an entry is made by purchase or at no cost. The value of any prize is income for New Jersey income tax purposes. A winner under age 18 must have the consent of a parent or guardian to claim a prize valued at more than $1,000.');
+    if (fired.has('AZ_CONTEST')) notices.push('Arizona: No increment has been added to the established purchase price of any product in connection with this contest.');
+    if (fired.has('HI_REALTY')) notices.push('Hawaii: A bond of not less than $10,000 for the real property prize has been filed with the director of commerce and consumer affairs, Bond No. ' + ph('HAWAII BOND NUMBER') + '.');
+    if (a.unclaimed === 'forfeit' && !outStates.includes('HI')) notices.push('Hawaii: Some or all prizes may not be awarded, as described in Winner Notification and Verification. The dates on which winners will be determined are stated in Winner Selection.');
+    if (notices.length) sec('State-Specific Notices', [{ p: 'These notices apply to residents of, or entries from, the states named.' }, { ul: notices }]);
 
     // ---- governing law
     if (a.disputeResolution === 'arbitration') {

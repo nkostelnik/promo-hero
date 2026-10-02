@@ -330,6 +330,39 @@ t('every flag id is tracked in the source registry with a well-formed record', (
     ', incorrect ' + count('incorrect') + ', unchecked ' + count('unchecked'));
 });
 
+// Second layer of review: the tests above check that the source registry and the review-marker registry are each
+// individually well formed. These two cross-check one against the other, and against the engine's own constants,
+// so a wrong or missing marker is a test failure, not something only a reader of the live site would notice.
+t('second layer: every flag whose source is not "verified" has a review marker', () => {
+  require('../js/sources.js');
+  require('../js/review.js');
+  const missing = [];
+  NS.SOURCES.filter((s) => s.status !== 'verified').forEach((s) => {
+    s.flagIds.forEach((id) => { if (!NS.REVIEW_FLAGS[id]) missing.push(id + ' (source ' + s.id + ', status "' + s.status + '")'); });
+  });
+  assert.deepStrictEqual(missing, [], 'flagged in sources.js as not fully verified, but missing from REVIEW_FLAGS: ' + missing.join('; '));
+});
+
+t('second layer: dollar thresholds in the engine match the dollar amounts in their citation', () => {
+  const flagsSrc = fs.readFileSync(path.join(__dirname, '..', 'js', 'flags.js'), 'utf8');
+  const constant = (name) => {
+    const m = flagsSrc.match(new RegExp(name + '\\s*=\\s*(\\d+)'));
+    assert.ok(m, name + ' constant not found in js/flags.js; this check needs updating too');
+    return Number(m[1]);
+  };
+  const amountsIn = (id) => {
+    const s = NS.SOURCES.find((x) => x.id === id);
+    assert.ok(s, id + ' source record not found');
+    return (s.claim + ' ' + s.excerpt).match(/\$[\d,]+/g).map((x) => Number(x.replace(/[$,]/g, '')));
+  };
+  const regThreshold = constant('REG_THRESHOLD');
+  ['NY_GBL_369E', 'FL_849_094'].forEach((id) => {
+    assert.ok(amountsIn(id).includes(regThreshold), id + ' does not cite $' + regThreshold + ', but js/flags.js REG_THRESHOLD is ' + regThreshold);
+  });
+  const riThreshold = constant('RI_THRESHOLD');
+  assert.ok(amountsIn('RI_11_50_1').includes(riThreshold), 'RI_11_50_1 does not cite $' + riThreshold + ', but js/flags.js RI_THRESHOLD is ' + riThreshold);
+});
+
 t('state survey records are well formed', () => {
   require('../js/states.js');
   require('../js/states2.js');

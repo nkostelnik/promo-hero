@@ -1,8 +1,10 @@
 /* Promo Hero: attorney review markers.
  * Any flag or state note that rests on a question nobody has resolved is marked "Recommended for attorney review",
  * with the reason. The marker takes no side on the question. "ref" is the id of the maintainer's tracked open question
- * (D01 to D16); the tracking notes are kept outside this repository. Remove an entry only after an attorney resolves it.
- * Not legal advice. */
+ * (D01 and up) when one exists in the attorney review packet kept outside this repository, or null when the issue
+ * is a single sourcing gap rather than a multi-option decision. Remove an entry only after an attorney resolves it.
+ * A test in test/engine.test.js enforces that every flag whose source record is not "verified" has an entry here,
+ * so a new or edited source cannot silently lose its review marker. Not legal advice. */
 (function () {
   const NS = (globalThis.PromoHero = globalThis.PromoHero || {});
 
@@ -40,6 +42,17 @@
     ID_VT_FEES: { ref: 'D09', reason: 'How Idaho and Vermont apply their entry fee and purchase bans to a given promotion was not confirmed.' },
     LA_KY_REVIEW: { ref: 'D12', reason: 'The Louisiana filing statute was not read, and the Kentucky mailed-offer rule was not confirmed as enacted.' },
     PRIZE_NOTICE: { ref: 'D15', reason: 'Whether state prize-notice rules reach an online promotion with a required payment is unresolved.' },
+    // Added 2026-10-01 by the second-layer source/review cross-check (see test/engine.test.js): these flag ids
+    // had a source record with a status other than "verified" but no review marker. Each was already worded to
+    // match what the source confirms; only the review marker was missing.
+    FB_RULES: { ref: null, reason: 'Meta\'s current policy wording is broader than this flag (it also covers reposting and incentivizing, not just sharing or tagging on a timeline), and no last-updated date was shown on the policy page.' },
+    TAX: { ref: null, reason: 'The IRS prize-reporting threshold is unresolved: one IRS instructions page showed $2,000 while the 1099-MISC overview page still showed $600.' },
+    AMOE_QUALITY: { ref: null, reason: 'The additional good-practice conditions this note lists (same deadlines, no extra hurdles) are not separately sourced to a statute or opinion.' },
+    CRITERIA: { ref: null, reason: 'The requirement for defined, weighted judging criteria is treated as good practice here; it was not sourced to a statute.' },
+    WINNER_PAYS: { ref: null, reason: 'State rules against requiring a winner to pay were confirmed only for Nevada, Iowa, and North Dakota; other states were not surveyed.' },
+    AGE_MAJORITY: { ref: null, reason: 'The age of majority was confirmed at 19 for Alabama and Nebraska only. Mississippi is commonly cited at 21 but its statute could not be read, and other states were not surveyed.' },
+    ALCOHOL_AGE: { ref: null, reason: 'State alcohol promotion rules were confirmed only for Maryland and Maine; other states were not surveyed, and the federal 21-year rule is a highway-funding condition, not a direct advertising rule.' },
+    MARKETING_REQUIRED: { ref: null, reason: 'The consent-validity risk rests on the CCPA definition of consent; state privacy laws beyond California were not surveyed.' },
   };
 
   // State code -> why the state's notes are recommended for review. Shown in the state notes on the review page.
